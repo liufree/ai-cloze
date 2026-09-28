@@ -1,0 +1,122 @@
+/* ai-cloze · AI 挖空阅读 */
+.ac-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.ac-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+
+.ac-status {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  font-size: var(--font-small);
+}
+
+.ac-density-label {
+  color: var(--text-muted);
+  font-size: var(--font-small);
+}
+
+.ac-density-val {
+  color: var(--text-muted);
+  font-size: var(--font-small);
+  min-width: 44px;
+}
+
+.ac-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px 48px;
+}
+
+.ac-loading,
+.ac-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 100%;
+  color: var(--text-muted);
+}
+
+.ac-markdown {
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+/* 挖空 span */
+.ac-cloze {
+  border-bottom: 1px dashed var(--color-accent);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  border-radius: 3px;
+  padding: 0 1px;
+}
+
+.ac-cloze:hover {
+  background: var(--background-modifier-hover);
+}
+
+.ac-cloze.ac-masked {
+  background: var(--background-secondary);
+  color: transparent;
+  text-shadow: none;
+  user-select: none;
+}
+
+.ac-cloze.ac-masked.ac-revealed {
+  color: var(--text-normal);
+  background: var(--background-secondary);
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 2px;
+}
+
+/* 复习模式 */
+.ac-review {
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.ac-review-head {
+  margin-bottom: 12px;
+}
+
+.ac-review-counter {
+  color: var(--text-muted);
+  font-size: var(--font-small);
+}
+
+.ac-review-actions {
+  margin-top: 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.ac-grade-tip {
+  color: var(--text-muted);
+  font-size: var(--font-small);
+}
+
+.ac-grade-queue {
+  color: var(--text-muted);
+  font-size: var(--font-smallest);
+}
