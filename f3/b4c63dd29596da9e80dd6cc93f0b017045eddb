@@ -1,0 +1,70 @@
+.gitignore
+  h_28a1a1f8bfa14e 1-2
+LICENSE
+  h_28a1a1f8bfa14e 1-21
+README.md
+  h_28a1a1f8bfa14e 1-44
+README.zh.md
+  h_28a1a1f8bfa14e 1-44
+esbuild.config.mjs
+  h_28a1a1f8bfa14e 1-30
+manifest.json
+  h_28a1a1f8bfa14e 1-9
+package-lock.json
+  h_28a1a1f8bfa14e 1-2279
+package.json
+  h_28a1a1f8bfa14e 1-35
+scripts/deploy.mjs
+  h_28a1a1f8bfa14e 1-25
+scripts/react-entry.tsx
+  h_28a1a1f8bfa14e 1-63
+scripts/react-test.mjs
+  h_28a1a1f8bfa14e 1-100
+scripts/smoke-entry.ts
+  h_28a1a1f8bfa14e 1-3
+scripts/smoke.mjs
+  h_28a1a1f8bfa14e 1-192
+scripts/stub-obsidian-react.ts
+  h_28a1a1f8bfa14e 1-29
+scripts/stub-obsidian.ts
+  h_28a1a1f8bfa14e 1-4
+src/ai.ts
+  h_28a1a1f8bfa14e 1-143
+src/cloze.ts
+  h_28a1a1f8bfa14e 1-103
+src/components/App.tsx
+  h_28a1a1f8bfa14e 1-389
+src/components/ReadingMode.tsx
+  h_28a1a1f8bfa14e 1-78
+src/components/ReviewMode.tsx
+  h_28a1a1f8bfa14e 1-154
+src/dom.ts
+  h_28a1a1f8bfa14e 1-104
+src/main.tsx
+  h_28a1a1f8bfa14e 1-154
+src/settings.ts
+  h_28a1a1f8bfa14e 1-263
+src/srs.ts
+  h_28a1a1f8bfa14e 1-47
+src/styles.css
+  h_28a1a1f8bfa14e 1-122
+src/types.ts
+  h_28a1a1f8bfa14e 1-72
+src/view.tsx
+  h_28a1a1f8bfa14e 1-112
+tsconfig.json
+  h_28a1a1f8bfa14e 1-22
+versions.json
+  h_28a1a1f8bfa14e 1-3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "f3b4c63dd29596da9e80dd6cc93f0b017045eddb",
+  "prompts": {},
+  "humans": {
+    "h_28a1a1f8bfa14e": {
+      "author": "liufree <liufreeo@gmail.com>"
+    }
+  }
+}
