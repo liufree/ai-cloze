@@ -1,0 +1,35 @@
+{
+  "name": "ai-cloze",
+  "version": "1.0.0",
+  "description": "ai-cloze：AI 智能挖空阅读视图 + 复习记忆模式（Obsidian 插件）",
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production && node scripts/deploy.mjs",
+    "typecheck": "tsc -noEmit -skipLibCheck",
+    "smoke": "node scripts/smoke.mjs && node scripts/react-test.mjs"
+  },
+  "keywords": [
+    "obsidian",
+    "cloze",
+    "spaced-repetition"
+  ],
+  "author": "liufree",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "esbuild": "^0.24.0",
+    "jsdom": "^30.1.1",
+    "obsidian": "^1.7.2",
+    "tslib": "^2.6.3",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "antd": "^5.21.0",
+    "dayjs": "^1.11.11",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}
