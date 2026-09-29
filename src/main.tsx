@@ -1,4 +1,4 @@
-import { ItemView, MarkdownView, Notice, Plugin, TFile, WorkspaceLeaf } from "obsidian";
+import { MarkdownView, Notice, Plugin, TFile, WorkspaceLeaf } from "obsidian";
 import { DEFAULT_SETTINGS, AIClozeSettingTab } from "./settings";
 import type { AIClozeData } from "./types";
 import { generateClozeTerms, hashText } from "./cloze";
@@ -22,7 +22,7 @@ export default class AIClozePlugin extends Plugin {
   }
 
   async onload() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<AIClozeData>);
     applyLanguage(this.settings.language);
 
     this.registerView(VIEW_TYPE_AI_CLOZE, (leaf) => new ClozeView(leaf, this));
@@ -144,7 +144,7 @@ export default class AIClozePlugin extends Plugin {
       active: true,
       state: { file: file.path, forceGenerate: opts?.forceGenerate ?? false },
     });
-    await this.app.workspace.revealLeaf(leaf);
+    this.app.workspace.setActiveLeaf(leaf, { focus: true });
   }
 
   onunload() {

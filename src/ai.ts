@@ -1,4 +1,4 @@
-import { requestUrl, RequestUrlParam } from "obsidian";
+import { requestUrl } from "obsidian";
 import type { ProviderSettings, ProviderKind } from "./types";
 import { t } from "./i18n";
 
@@ -58,7 +58,10 @@ async function callOpenAICompatible(
   if (res.status !== 200) {
     throw new Error(t("err.requestFailed", { status: res.status, err: trimErr(res.text) }));
   }
-  const json = res.json;
+  const json = res.json as
+    | { choices?: Array<{ message?: { content?: unknown } }> }
+    | null
+    | undefined;
   const content: unknown = json?.choices?.[0]?.message?.content;
   if (typeof content !== "string") {
     throw new Error(t("err.noContent"));
@@ -99,7 +102,8 @@ async function callAnthropic(
   if (res.status !== 200) {
     throw new Error(t("err.requestFailed", { status: res.status, err: trimErr(res.text) }));
   }
-  const parts: Array<{ type?: string; text?: string }> = res.json?.content ?? [];
+  const parts: Array<{ type?: string; text?: string }> =
+    (res.json as { content?: Array<{ type?: string; text?: string }> } | null)?.content ?? [];
   const text = parts
     .filter((p) => p.type === "text" && typeof p.text === "string")
     .map((p) => p.text as string)

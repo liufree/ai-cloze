@@ -27,8 +27,7 @@ export function extractJson(text: string): unknown {
 /** Validate and normalize the terms list returned by the AI */
 export function normalizeTerms(raw: unknown): ClozeTerm[] {
   if (!raw || typeof raw !== "object" || !("terms" in raw)) return [];
-  const arr = raw.terms;
-  if (!Array.isArray(arr)) return [];
+  const arr: unknown[] = Array.isArray(raw.terms) ? raw.terms : [];
   const seen = new Set<string>();
   const out: ClozeTerm[] = [];
   for (const item of arr) {

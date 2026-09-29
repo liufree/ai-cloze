@@ -42,9 +42,8 @@ export class ClozeView extends ItemView {
     return this.state;
   }
 
-  async setState(state: ClozeViewState, result: unknown): Promise<void> {
+  async setState(state: ClozeViewState, _result: unknown): Promise<void> {
     this.state = state;
-    result;
     await this.refresh();
   }
 
@@ -62,7 +61,7 @@ export class ClozeView extends ItemView {
       .find((leaf) => leaf.view instanceof MarkdownView && leaf.view.file?.path === file.path);
     const leaf = existing ?? this.app.workspace.getLeaf("tab");
     await leaf.openFile(file);
-    await this.app.workspace.revealLeaf(leaf);
+    this.app.workspace.setActiveLeaf(leaf, { focus: true });
   }
 
   async onOpen(): Promise<void> {

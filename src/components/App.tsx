@@ -184,7 +184,7 @@ function AppInner({ plugin, view }: Props) {
       api.info(t("msg.autoCloze"));
       void doGenerate(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run only when the active file changes or a force-generate is requested
   }, [file?.path, view.state.forceGenerate]);
 
   const toggleTerm = useCallback(
@@ -257,7 +257,9 @@ function AppInner({ plugin, view }: Props) {
     // write terms graded good/easy in this review session back to the note's flashcard section as ==term== (compatible with Spaced Repetition)
     const maskedTerms = terms.filter((t) => masked.has(t.text));
     const reviewed = gradeQueue.map((g, i) => ({ g, term: maskedTerms[i]?.text }));
-    const mastered = reviewed.filter((r) => r.g >= 2 && r.term).map((r) => r.term as string);
+    const mastered = reviewed
+      .filter((r): r is { g: Grade; term: string } => r.g >= 2 && !!r.term)
+      .map((r) => r.term);
     if (mastered.length === 0) {
       api.info(t("msg.noExport"));
       return;
