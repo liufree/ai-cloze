@@ -78,7 +78,7 @@ export function ReviewMode({
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- revealedRef read intentionally; re-render only on card switch
   }, [view, file, source, terms, card]);
 
   // reveal answer: add/remove ac-revealed on the current card's spans in place, without re-rendering the page

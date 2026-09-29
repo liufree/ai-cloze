@@ -57,7 +57,7 @@ export function ReadingMode({ view, file, source, terms, masked, revealed, onTog
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refs (maskedRef/revealedRef) read latest state without re-rendering
   }, [view, file, source, terms]);
 
   // masked/revealed changes: toggle class names in place without rebuilding the DOM

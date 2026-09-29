@@ -37,7 +37,7 @@ export class AIClozeSettingTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: t("settings.title") });
+    new Setting(containerEl).setName(t("settings.title")).setHeading();
 
     new Setting(containerEl)
       .setName(t("settings.languageName"))
@@ -57,7 +57,9 @@ export class AIClozeSettingTab extends PluginSettingTab {
             // make already-open cloze views switch language immediately
             this.plugin.app.workspace
               .getLeavesOfType(VIEW_TYPE_AI_CLOZE)
-              .forEach((leaf) => (leaf.view as ClozeView).refresh());
+              .forEach((leaf) => {
+                void (leaf.view as ClozeView).refresh();
+              });
           })
       );
 
@@ -140,7 +142,6 @@ export class AIClozeSettingTab extends PluginSettingTab {
         sl
           .setLimits(0, 1, 0.1)
           .setValue(this.plugin.settings.provider.temperature)
-          .setDynamicTooltip()
           .onChange(async (v) => {
             this.plugin.settings.provider.temperature = v;
             await this.plugin.saveData(this.plugin.settings);
@@ -154,7 +155,6 @@ export class AIClozeSettingTab extends PluginSettingTab {
         sl
           .setLimits(500, 8000, 500)
           .setValue(this.plugin.settings.provider.maxTokens)
-          .setDynamicTooltip()
           .onChange(async (v) => {
             this.plugin.settings.provider.maxTokens = v;
             await this.plugin.saveData(this.plugin.settings);
@@ -187,7 +187,6 @@ export class AIClozeSettingTab extends PluginSettingTab {
         sl
           .setLimits(0, 100, 5)
           .setValue(this.plugin.settings.defaultDensity)
-          .setDynamicTooltip()
           .onChange(async (v) => {
             this.plugin.settings.defaultDensity = v;
             await this.plugin.saveData(this.plugin.settings);
@@ -270,7 +269,7 @@ export class AIClozeSettingTab extends PluginSettingTab {
       .setName(t("settings.clearName"))
       .setDesc(t("settings.clearDesc"))
       .addButton((b) =>
-        b.setButtonText(t("settings.clearButton")).setWarning().onClick(async () => {
+        b.setButtonText(t("settings.clearButton")).setDestructive().onClick(async () => {
           this.plugin.settings.clozeCache = {};
           this.plugin.settings.review = {};
           await this.plugin.saveData(this.plugin.settings);
@@ -280,8 +279,9 @@ export class AIClozeSettingTab extends PluginSettingTab {
       );
 
     this.containerEl.createEl("hr");
+    const root = this.app.vault.getRoot();
     this.containerEl.createEl("p", {
-      text: t("settings.footer", { path: (this.app.vault.getRoot() as TFolder).path || "/" }),
+      text: t("settings.footer", { path: root instanceof TFolder ? root.path : "/" }),
       attr: { style: "color: var(--text-muted); font-size: var(--font-smallest);" },
     });
   }
