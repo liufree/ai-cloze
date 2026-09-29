@@ -1,0 +1,26 @@
+manifest.json
+  h_28a1a1f8bfa14e 5
+scripts/stub-obsidian-react.ts
+  h_28a1a1f8bfa14e 2
+scripts/stub-obsidian.ts
+  h_28a1a1f8bfa14e 1,5-6
+src/i18n.ts
+  h_28a1a1f8bfa14e 3-4,6,17
+src/settings.ts
+  h_28a1a1f8bfa14e 2,30-35,44-96,98-222,224-238,240-268,270,272-347
+src/styles.css
+  h_28a1a1f8bfa14e 94-98
+versions.json
+  h_28a1a1f8bfa14e 2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "bc5a6690b08a3579f156306dd8af89b090589236",
+  "prompts": {},
+  "humans": {
+    "h_28a1a1f8bfa14e": {
+      "author": "liufree <liufreeo@gmail.com>"
+    }
+  }
+}
