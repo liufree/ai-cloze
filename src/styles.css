@@ -83,8 +83,6 @@
   color: var(--text-normal);
   background: var(--background-secondary);
   text-decoration: underline;
-  text-decoration-color: var(--color-accent);
-  text-underline-offset: 2px;
 }
 
 /* review mode */
