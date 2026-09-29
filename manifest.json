@@ -3,7 +3,7 @@
   "name": "AI Cloze Reading",
   "version": "1.0.0",
   "minAppVersion": "1.4.0",
-  "description": "AI-powered cloze reading view: open any note to generate a cloze reading view, adjust cloze density, remember the last AI cloze result (unless you regenerate), and spaced-repetition review mode (integrated with the Obsidian API). Supports custom AI providers and models.",
+  "description": "AI-powered cloze reading view for any note: adjustable cloze density, remembers the last AI result (unless you regenerate), and SM-2 spaced-repetition review mode. Supports custom AI providers and models.",
   "author": "liufree",
   "authorUrl": "https://github.com/liufree",
   "isDesktopOnly": false
