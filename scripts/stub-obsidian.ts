@@ -1,4 +1,6 @@
-// Node 冒烟测试用的 obsidian 桩：仅占位，真实逻辑不依赖 obsidian 运行时
+// Node smoke-test stub for obsidian: placeholder only, real logic does not depend on the obsidian runtime
 export const requestUrl = async () => {
   throw new Error("stub requestUrl");
 };
+
+export const getLanguage = () => "en";

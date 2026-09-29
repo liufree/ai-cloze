@@ -1,8 +1,9 @@
 /**
  * Lightweight i18n: zh/en dictionaries + language detection.
- * Language comes from Obsidian settings (localStorage "language"); falls back to
- * the system language. Chinese (zh-Hans/zh-TW etc.) -> zh, everything else -> en.
+ * Language comes from Obsidian's getLanguage(); falls back to the system
+ * language. Chinese (zh-Hans/zh-TW etc.) -> zh, everything else -> en.
  */
+import { getLanguage } from "obsidian";
 
 /** User-facing language preference stored in plugin settings. */
 export type LanguageSetting = "system" | "zh" | "en";
@@ -13,8 +14,7 @@ let locale: Locale = "en";
 
 /** Detect the Obsidian UI language. */
 export function detectLocale(): Locale {
-  const stored = window.localStorage.getItem("language");
-  const lang = (stored || navigator.language || "en").toLowerCase();
+  const lang = (getLanguage() || navigator.language || "en").toLowerCase();
   return lang.startsWith("zh") ? "zh" : "en";
 }
 

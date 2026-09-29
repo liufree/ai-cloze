@@ -91,6 +91,11 @@
   margin: 0 auto;
 }
 
+.ac-settings-footer {
+  color: var(--text-muted);
+  font-size: var(--font-smallest);
+}
+
 .ac-review-head {
   margin-bottom: 12px;
 }

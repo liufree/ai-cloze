@@ -1,4 +1,5 @@
 import { App, Notice, PluginSettingTab, Setting, TFolder } from "obsidian";
+import type { SettingDefinitionItem } from "obsidian";
 import { PROVIDER_PRESETS, testConnection } from "./ai";
 import type AIClozePlugin from "./main";
 import type { ProviderKind } from "./types";
@@ -26,6 +27,12 @@ export const DEFAULT_SETTINGS = {
   review: {},
 };
 
+/**
+ * Declarative settings tab (Obsidian 1.13+).
+ * getSettingDefinitions() drives rendering and settings search; simple fields
+ * use built-in controls, and fields needing custom behavior (password input,
+ * async buttons, footer) render imperatively via `render`.
+ */
 export class AIClozeSettingTab extends PluginSettingTab {
   plugin: AIClozePlugin;
 
@@ -34,255 +41,310 @@ export class AIClozeSettingTab extends PluginSettingTab {
     this.plugin = plugin;
   }
 
-  display(): void {
-    const { containerEl } = this;
-    containerEl.empty();
-    new Setting(containerEl).setName(t("settings.title")).setHeading();
-
-    new Setting(containerEl)
-      .setName(t("settings.languageName"))
-      .setDesc(t("settings.languageDesc"))
-      .addDropdown((dd) =>
-        dd
-          .addOption("system", t("settings.languageSystem"))
-          .addOption("zh", "中文")
-          .addOption("en", "English")
-          .setValue(this.plugin.settings.language)
-          .onChange(async (v) => {
-            const lang = v as "system" | "zh" | "en";
-            this.plugin.settings.language = lang;
-            await this.plugin.saveData(this.plugin.settings);
-            applyLanguage(lang);
-            this.display();
-            // make already-open cloze views switch language immediately
-            this.plugin.app.workspace
-              .getLeavesOfType(VIEW_TYPE_AI_CLOZE)
-              .forEach((leaf) => {
-                void (leaf.view as ClozeView).refresh();
+  getSettingDefinitions(): SettingDefinitionItem[] {
+    const p = this.plugin.settings.provider;
+    return [
+      {
+        name: t("settings.languageName"),
+        desc: t("settings.languageDesc"),
+        control: {
+          type: "dropdown",
+          key: "language",
+          options: {
+            system: t("settings.languageSystem"),
+            zh: "中文",
+            en: "English",
+          },
+        },
+      },
+      {
+        type: "group",
+        heading: t("settings.providerName"),
+        items: [
+          {
+            name: t("settings.providerName"),
+            desc: t("settings.providerDesc"),
+            control: {
+              type: "dropdown",
+              key: "provider.provider",
+              options: Object.fromEntries(
+                Object.keys(PROVIDER_PRESETS).map((k) => [k, t(`provider.${k}`)])
+              ),
+            },
+          },
+          {
+            name: t("settings.baseUrlName"),
+            desc: t("settings.baseUrlDesc"),
+            control: {
+              type: "text",
+              key: "provider.baseUrl",
+              placeholder: PROVIDER_PRESETS[p.provider].baseUrl,
+            },
+          },
+          {
+            name: t("settings.apiKeyName"),
+            desc: t("settings.apiKeyDesc"),
+            render: (setting) => {
+              setting.addText((txt) => {
+                txt.inputEl.type = "password";
+                txt
+                  .setPlaceholder("sk-…")
+                  .setValue(this.plugin.settings.provider.apiKey)
+                  .onChange(async (v) => {
+                    this.plugin.settings.provider.apiKey = v.trim();
+                    await this.plugin.saveData(this.plugin.settings);
+                  });
               });
-          })
-      );
-
-    new Setting(containerEl)
-      .setName(t("settings.providerName"))
-      .setDesc(t("settings.providerDesc"))
-      .addDropdown((dd) => {
-        dd.addOptions(
-          Object.fromEntries(
-            Object.keys(PROVIDER_PRESETS).map((k) => [k, t(`provider.${k}`)])
-          )
-        )
-          .setValue(this.plugin.settings.provider.provider)
-          .onChange(async (val) => {
-            const kind = val as ProviderKind;
-            const presets = PROVIDER_PRESETS[kind];
-            const prev = this.plugin.settings.provider;
-            // when switching providers: if baseUrl is still the old preset default, follow the new preset
-            this.plugin.settings.provider = {
-              ...prev,
-              provider: kind,
-              baseUrl:
-                prev.baseUrl === PROVIDER_PRESETS[prev.provider].baseUrl
-                  ? presets.baseUrl
-                  : prev.baseUrl,
-              model:
-                prev.model === PROVIDER_PRESETS[prev.provider].defaultModel
-                  ? presets.defaultModel
-                  : prev.model,
-            };
-            await this.plugin.saveData(this.plugin.settings);
-            this.display();
-          });
-      });
-
-    new Setting(containerEl)
-      .setName(t("settings.baseUrlName"))
-      .setDesc(t("settings.baseUrlDesc"))
-      .addText((txt) =>
-        txt
-          .setPlaceholder(PROVIDER_PRESETS[this.plugin.settings.provider.provider].baseUrl)
-          .setValue(this.plugin.settings.provider.baseUrl)
-          .onChange(async (v) => {
-            this.plugin.settings.provider.baseUrl = v.trim() || PROVIDER_PRESETS[this.plugin.settings.provider.provider].baseUrl;
-            await this.plugin.saveData(this.plugin.settings);
-          })
-      );
-
-    new Setting(containerEl)
-      .setName(t("settings.apiKeyName"))
-      .setDesc(t("settings.apiKeyDesc"))
-      .addText((txt) => {
-        txt.inputEl.type = "password";
-        return txt
-          .setPlaceholder("sk-…")
-          .setValue(this.plugin.settings.provider.apiKey)
-          .onChange(async (v) => {
-            this.plugin.settings.provider.apiKey = v.trim();
-            await this.plugin.saveData(this.plugin.settings);
-          });
-      });
-
-    new Setting(containerEl)
-      .setName(t("settings.modelName"))
-      .setDesc(t("settings.modelDesc"))
-      .addText((txt) =>
-        txt
-          .setPlaceholder(PROVIDER_PRESETS[this.plugin.settings.provider.provider].defaultModel)
-          .setValue(this.plugin.settings.provider.model)
-          .onChange(async (v) => {
-            this.plugin.settings.provider.model = v.trim() || PROVIDER_PRESETS[this.plugin.settings.provider.provider].defaultModel;
-            await this.plugin.saveData(this.plugin.settings);
-          })
-      );
-
-    new Setting(containerEl)
-      .setName(t("settings.tempName"))
-      .setDesc(t("settings.tempDesc"))
-      .addSlider((sl) =>
-        sl
-          .setLimits(0, 1, 0.1)
-          .setValue(this.plugin.settings.provider.temperature)
-          .onChange(async (v) => {
-            this.plugin.settings.provider.temperature = v;
-            await this.plugin.saveData(this.plugin.settings);
-          })
-      );
-
-    new Setting(containerEl)
-      .setName(t("settings.maxTokensName"))
-      .setDesc(t("settings.maxTokensDesc"))
-      .addSlider((sl) =>
-        sl
-          .setLimits(500, 8000, 500)
-          .setValue(this.plugin.settings.provider.maxTokens)
-          .onChange(async (v) => {
-            this.plugin.settings.provider.maxTokens = v;
-            await this.plugin.saveData(this.plugin.settings);
-          })
-      );
-
-    new Setting(containerEl)
-      .setName(t("settings.testName"))
-      .setDesc(t("settings.testDesc"))
-      .addButton((b) =>
-        b.setButtonText(t("settings.testButton")).onClick(async () => {
-          b.setDisabled(true);
-          b.setButtonText(t("settings.testingButton"));
-          try {
-            const reply = await testConnection(this.plugin.settings.provider);
-            new Notice(`✅ ${t("msg.connectionOk")}: ${reply.slice(0, 80)}`, 6000);
-          } catch (e) {
-            new Notice(`❌ ${t("msg.connectionFail")}: ${e instanceof Error ? e.message : String(e)}`, 10000);
-          } finally {
-            b.setDisabled(false);
-            b.setButtonText(t("settings.testButton"));
-          }
-        })
-      );
-
-    new Setting(containerEl)
-      .setName(t("settings.densityName"))
-      .setDesc(t("settings.densityDesc"))
-      .addSlider((sl) =>
-        sl
-          .setLimits(0, 100, 5)
-          .setValue(this.plugin.settings.defaultDensity)
-          .onChange(async (v) => {
-            this.plugin.settings.defaultDensity = v;
-            await this.plugin.saveData(this.plugin.settings);
-          })
-      );
-
-    new Setting(containerEl)
-      .setName(t("settings.autoClozeName"))
-      .setDesc(t("settings.autoClozeDesc"))
-      .addToggle((tg) =>
-        tg.setValue(this.plugin.settings.autoCloze).onChange(async (v) => {
-          this.plugin.settings.autoCloze = v;
-          await this.plugin.saveData(this.plugin.settings);
-        })
-      );
-
-    new Setting(containerEl)
-      .setName(t("settings.bgName"))
-      .setDesc(t("settings.bgDesc"))
-      .addToggle((tg) =>
-        tg.setValue(this.plugin.settings.backgroundCloze).onChange(async (v) => {
-          this.plugin.settings.backgroundCloze = v;
-          await this.plugin.saveData(this.plugin.settings);
-        })
-      );
-
-    new Setting(containerEl)
-      .setName(t("settings.bgScopeName"))
-      .setDesc(t("settings.bgScopeDesc"))
-      .addDropdown((dd) =>
-        dd
-          .addOption("all", t("settings.scopeAll"))
-          .addOption("tag", t("settings.scopeTag"))
-          .addOption("folder", t("settings.scopeFolder"))
-          .setValue(this.plugin.settings.backgroundScope)
-          .onChange(async (v) => {
-            this.plugin.settings.backgroundScope = v as "all" | "tag" | "folder";
-            await this.plugin.saveData(this.plugin.settings);
-            this.display();
-          })
-      );
-
-    if (this.plugin.settings.backgroundScope === "tag") {
-      new Setting(containerEl)
-        .setName(t("settings.bgTagName"))
-        .setDesc(t("settings.bgTagDesc"))
-        .addText((txt) =>
-          txt
-            .setPlaceholder(t("settings.bgTagPlaceholder"))
-            .setValue(this.plugin.settings.backgroundTags.join(", "))
-            .onChange(async (v) => {
-              this.plugin.settings.backgroundTags = v
-                .split(/[,，]/)
-                .map((s) => s.trim())
-                .filter(Boolean);
+            },
+          },
+          {
+            name: t("settings.modelName"),
+            desc: t("settings.modelDesc"),
+            control: {
+              type: "text",
+              key: "provider.model",
+              placeholder: PROVIDER_PRESETS[p.provider].defaultModel,
+            },
+          },
+          {
+            name: t("settings.tempName"),
+            desc: t("settings.tempDesc"),
+            control: {
+              type: "slider",
+              key: "provider.temperature",
+              min: 0,
+              max: 1,
+              step: 0.1,
+            },
+          },
+          {
+            name: t("settings.maxTokensName"),
+            desc: t("settings.maxTokensDesc"),
+            control: {
+              type: "slider",
+              key: "provider.maxTokens",
+              min: 500,
+              max: 8000,
+              step: 500,
+            },
+          },
+          {
+            name: t("settings.testName"),
+            desc: t("settings.testDesc"),
+            render: (setting) => {
+              setting.addButton((b) => {
+                b.setButtonText(t("settings.testButton")).onClick(async () => {
+                  b.setDisabled(true);
+                  b.setButtonText(t("settings.testingButton"));
+                  try {
+                    const reply = await testConnection(this.plugin.settings.provider);
+                    new Notice(`✅ ${t("msg.connectionOk")}: ${reply.slice(0, 80)}`, 6000);
+                  } catch (e) {
+                    new Notice(
+                      `❌ ${t("msg.connectionFail")}: ${e instanceof Error ? e.message : String(e)}`,
+                      10000
+                    );
+                  } finally {
+                    b.setDisabled(false);
+                    b.setButtonText(t("settings.testButton"));
+                  }
+                });
+              });
+            },
+          },
+        ],
+      },
+      {
+        name: t("settings.densityName"),
+        desc: t("settings.densityDesc"),
+        control: {
+          type: "slider",
+          key: "defaultDensity",
+          min: 0,
+          max: 100,
+          step: 5,
+        },
+      },
+      {
+        name: t("settings.autoClozeName"),
+        desc: t("settings.autoClozeDesc"),
+        control: { type: "toggle", key: "autoCloze" },
+      },
+      {
+        name: t("settings.bgName"),
+        desc: t("settings.bgDesc"),
+        control: { type: "toggle", key: "backgroundCloze" },
+      },
+      {
+        name: t("settings.bgScopeName"),
+        desc: t("settings.bgScopeDesc"),
+        control: {
+          type: "dropdown",
+          key: "backgroundScope",
+          options: {
+            all: t("settings.scopeAll"),
+            tag: t("settings.scopeTag"),
+            folder: t("settings.scopeFolder"),
+          },
+        },
+      },
+      {
+        name: t("settings.bgTagName"),
+        desc: t("settings.bgTagDesc"),
+        control: {
+          type: "text",
+          key: "backgroundTags",
+          placeholder: t("settings.bgTagPlaceholder"),
+        },
+        visible: () => this.plugin.settings.backgroundScope === "tag",
+      },
+      {
+        name: t("settings.bgFolderName"),
+        desc: t("settings.bgFolderDesc"),
+        control: {
+          type: "text",
+          key: "backgroundFolders",
+          placeholder: t("settings.bgFolderPlaceholder"),
+        },
+        visible: () => this.plugin.settings.backgroundScope === "folder",
+      },
+      {
+        name: t("settings.clearName"),
+        desc: t("settings.clearDesc"),
+        render: (setting) => {
+          setting.addButton((b) => {
+            b.setButtonText(t("settings.clearButton")).setDestructive().onClick(async () => {
+              this.plugin.settings.clozeCache = {};
+              this.plugin.settings.review = {};
               await this.plugin.saveData(this.plugin.settings);
-            })
-        );
+              new Notice(t("notice.memoryCleared"));
+              this.update();
+            });
+          });
+        },
+      },
+      {
+        name: "",
+        render: (setting) => {
+          const root = this.app.vault.getRoot();
+          setting.nameEl.remove();
+          setting.descEl.setText(
+            t("settings.footer", { path: root instanceof TFolder ? root.path : "/" })
+          );
+          setting.descEl.addClass("ac-settings-footer");
+        },
+      },
+    ];
+  }
+
+  getControlValue(key: string): unknown {
+    const s = this.plugin.settings;
+    switch (key) {
+      case "provider.provider":
+        return s.provider.provider;
+      case "provider.baseUrl":
+        return s.provider.baseUrl;
+      case "provider.model":
+        return s.provider.model;
+      case "provider.temperature":
+        return s.provider.temperature;
+      case "provider.maxTokens":
+        return s.provider.maxTokens;
+      case "language":
+        return s.language;
+      case "defaultDensity":
+        return s.defaultDensity;
+      case "autoCloze":
+        return s.autoCloze;
+      case "backgroundCloze":
+        return s.backgroundCloze;
+      case "backgroundScope":
+        return s.backgroundScope;
+      case "backgroundTags":
+        return s.backgroundTags.join(", ");
+      case "backgroundFolders":
+        return s.backgroundFolders.join(", ");
+      default:
+        return undefined;
     }
+  }
 
-    if (this.plugin.settings.backgroundScope === "folder") {
-      new Setting(containerEl)
-        .setName(t("settings.bgFolderName"))
-        .setDesc(t("settings.bgFolderDesc"))
-        .addText((txt) =>
-          txt
-            .setPlaceholder(t("settings.bgFolderPlaceholder"))
-            .setValue(this.plugin.settings.backgroundFolders.join(", "))
-            .onChange(async (v) => {
-              this.plugin.settings.backgroundFolders = v
-                .split(/[,，]/)
-                .map((s) => s.trim().replace(/^\/+|\/+$/g, ""))
-                .filter(Boolean);
-              await this.plugin.saveData(this.plugin.settings);
-            })
-        );
+  async setControlValue(key: string, value: unknown): Promise<void> {
+    const s = this.plugin.settings;
+    switch (key) {
+      case "provider.provider": {
+        const kind = value as ProviderKind;
+        const presets = PROVIDER_PRESETS[kind];
+        const prev = s.provider;
+        // When switching provider, follow the new presets if baseUrl/model still match the old defaults
+        s.provider = {
+          ...prev,
+          provider: kind,
+          baseUrl:
+            prev.baseUrl === PROVIDER_PRESETS[prev.provider].baseUrl
+              ? presets.baseUrl
+              : prev.baseUrl,
+          model:
+            prev.model === PROVIDER_PRESETS[prev.provider].defaultModel
+              ? presets.defaultModel
+              : prev.model,
+        };
+        break;
+      }
+      case "provider.baseUrl":
+        s.provider.baseUrl =
+          (value as string).trim() || PROVIDER_PRESETS[s.provider.provider].baseUrl;
+        break;
+      case "provider.model":
+        s.provider.model =
+          (value as string).trim() || PROVIDER_PRESETS[s.provider.provider].defaultModel;
+        break;
+      case "provider.temperature":
+        s.provider.temperature = value as number;
+        break;
+      case "provider.maxTokens":
+        s.provider.maxTokens = value as number;
+        break;
+      case "language":
+        s.language = value as "system" | "zh" | "en";
+        applyLanguage(s.language);
+        break;
+      case "defaultDensity":
+        s.defaultDensity = value as number;
+        break;
+      case "autoCloze":
+        s.autoCloze = value as boolean;
+        break;
+      case "backgroundCloze":
+        s.backgroundCloze = value as boolean;
+        break;
+      case "backgroundScope":
+        s.backgroundScope = value as "all" | "tag" | "folder";
+        break;
+      case "backgroundTags":
+        s.backgroundTags = (value as string)
+          .split(/[,，]/)
+          .map((x) => x.trim())
+          .filter(Boolean);
+        break;
+      case "backgroundFolders":
+        s.backgroundFolders = (value as string)
+          .split(/[,，]/)
+          .map((x) => x.trim().replace(/^\/+|\/+$/g, ""))
+          .filter(Boolean);
+        break;
+      default:
+        return;
     }
-
-    new Setting(containerEl)
-      .setName(t("settings.clearName"))
-      .setDesc(t("settings.clearDesc"))
-      .addButton((b) =>
-        b.setButtonText(t("settings.clearButton")).setDestructive().onClick(async () => {
-          this.plugin.settings.clozeCache = {};
-          this.plugin.settings.review = {};
-          await this.plugin.saveData(this.plugin.settings);
-          new Notice(t("notice.memoryCleared"));
-          this.display();
-        })
-      );
-
-    this.containerEl.createEl("hr");
-    const root = this.app.vault.getRoot();
-    this.containerEl.createEl("p", {
-      text: t("settings.footer", { path: root instanceof TFolder ? root.path : "/" }),
-      attr: { style: "color: var(--text-muted); font-size: var(--font-smallest);" },
-    });
+    await this.plugin.saveData(this.plugin.settings);
+    if (key === "backgroundScope" || key === "language") {
+      // Re-evaluate visible predicates and re-render labels in the new language
+      this.update();
+    }
+    if (key === "language") {
+      this.app.workspace.getLeavesOfType(VIEW_TYPE_AI_CLOZE).forEach((leaf) => {
+        void (leaf.view as ClozeView).refresh();
+      });
+    }
   }
 }
