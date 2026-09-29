@@ -1,0 +1,28 @@
+manifest.json
+  h_28a1a1f8bfa14e 4
+package-lock.json
+  h_28a1a1f8bfa14e 3,9
+package.json
+  h_28a1a1f8bfa14e 3
+src/dom.ts
+  h_28a1a1f8bfa14e 45,63
+src/i18n.ts
+  h_28a1a1f8bfa14e 280
+src/main.tsx
+  h_28a1a1f8bfa14e 116
+src/settings.ts
+  h_28a1a1f8bfa14e 1
+versions.json
+  h_28a1a1f8bfa14e 2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "7b9a69e650fe28730e68a8bea9b056eed1305d31",
+  "prompts": {},
+  "humans": {
+    "h_28a1a1f8bfa14e": {
+      "author": "liufree <liufreeo@gmail.com>"
+    }
+  }
+}
