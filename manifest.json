@@ -1,7 +1,7 @@
 {
   "id": "ai-cloze",
   "name": "AI Cloze Reading",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "minAppVersion": "1.13.0",
   "description": "AI-powered cloze reading view for any note: adjustable cloze density, remembers the last AI result (unless you regenerate), and SM-2 spaced-repetition review mode. Supports custom AI providers and models.",
   "author": "liufree",

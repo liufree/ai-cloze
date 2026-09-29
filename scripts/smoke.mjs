@@ -97,6 +97,8 @@ function ok(cond, name) {
   globalThis.NodeFilter = dom.window.NodeFilter;
   globalThis.Node = dom.window.Node;
   globalThis.HTMLElement = dom.window.HTMLElement;
+  globalThis.createFragment = () => dom.window.document.createDocumentFragment();
+  globalThis.createSpan = () => dom.window.document.createElement("span");
 
   const root = dom.window.document.getElementById("root");
   root.innerHTML = "<p>内存是重要的概念，内存又分主存。</p><code>内存</code>";
@@ -125,6 +127,8 @@ function ok(cond, name) {
   globalThis.NodeFilter = dom.window.NodeFilter;
   globalThis.Node = dom.window.Node;
   globalThis.HTMLElement = dom.window.HTMLElement;
+  globalThis.createFragment = () => dom.window.document.createDocumentFragment();
+  globalThis.createSpan = () => dom.window.document.createElement("span");
 
   const root = dom.window.document.getElementById("root");
   root.innerHTML = "<p>内存是重要概念。</p>";
@@ -155,6 +159,8 @@ function ok(cond, name) {
   globalThis.NodeFilter = dom.window.NodeFilter;
   globalThis.Node = dom.window.Node;
   globalThis.HTMLElement = dom.window.HTMLElement;
+  globalThis.createFragment = () => dom.window.document.createDocumentFragment();
+  globalThis.createSpan = () => dom.window.document.createElement("span");
 
   const root = dom.window.document.getElementById("root");
   root.innerHTML = `

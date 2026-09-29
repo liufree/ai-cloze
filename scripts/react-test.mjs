@@ -17,6 +17,8 @@ Object.defineProperty(globalThis, "navigator", { value: dom.window.navigator, co
 globalThis.Node = dom.window.Node;
 globalThis.NodeFilter = dom.window.NodeFilter;
 globalThis.HTMLElement = dom.window.HTMLElement;
+globalThis.createFragment = () => dom.window.document.createDocumentFragment();
+globalThis.createSpan = () => dom.window.document.createElement("span");
 // Obsidian 扩展的 DOM 便捷方法（empty），jsdom 没有
 dom.window.HTMLElement.prototype.empty = function empty() {
   this.textContent = "";
