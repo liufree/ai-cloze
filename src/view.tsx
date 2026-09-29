@@ -5,6 +5,7 @@ import { App } from "./components/App";
 import type AIClozePlugin from "./main";
 import type { ClozeTerm } from "./types";
 import { wrapClozeTerms } from "./dom";
+import { t } from "./i18n";
 
 export const VIEW_TYPE_AI_CLOZE = "ai-cloze-view";
 
@@ -30,7 +31,7 @@ export class ClozeView extends ItemView {
 
   getDisplayText(): string {
     const file = this.getFile();
-    return file ? `AI 挖空 · ${file.basename}` : "AI 挖空阅读";
+    return file ? t("view.display.withFile", { name: file.basename }) : t("view.display.empty");
   }
 
   getIcon(): string {
@@ -52,7 +53,7 @@ export class ClozeView extends ItemView {
     return f instanceof TFile ? f : null;
   }
 
-  /** 跳回原文档：已打开的 leaf 直接激活，否则新开 tab */
+  /** Jump back to the source document: activate an already-open leaf, otherwise open a new tab */
   async openOriginal(): Promise<void> {
     const file = this.getFile();
     if (!file) return;
@@ -88,10 +89,10 @@ export class ClozeView extends ItemView {
 }
 
 /**
- * 供组件使用的渲染工具：渲染 markdown 并包上挖空。
- * 返回被包裹的 span 列表，便于调用方维护 term→span 映射以做原地类名切换。
- * isStale 用于竞态防护：发起新的渲染后，旧渲染的空/包装步骤会跳过，
- * 避免旧的异步结果污染新 DOM。
+ * Rendering utility for components: renders markdown and wraps cloze terms.
+ * Returns the list of wrapped spans so callers can keep a term→span map for in-place class toggling.
+ * `isStale` guards against races: once a new render is started, the clearing/wrapping steps of an old
+ * render are skipped so stale async results don't pollute the new DOM.
  */
 export async function renderMarkdownWithCloze(
   el: HTMLElement,

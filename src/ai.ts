@@ -1,22 +1,20 @@
 import { requestUrl, RequestUrlParam } from "obsidian";
 import type { ProviderSettings, ProviderKind } from "./types";
+import { t } from "./i18n";
 
 export const PROVIDER_PRESETS: Record<
   ProviderKind,
-  { label: string; baseUrl: string; defaultModel: string }
+  { baseUrl: string; defaultModel: string }
 > = {
   openai: {
-    label: "OpenAI 兼容",
     baseUrl: "https://api.openai.com/v1",
     defaultModel: "gpt-4o-mini",
   },
   anthropic: {
-    label: "Anthropic",
     baseUrl: "https://api.anthropic.com/v1",
     defaultModel: "claude-3-5-haiku-latest",
   },
   ollama: {
-    label: "Ollama（本地）",
     baseUrl: "http://localhost:11434/v1",
     defaultModel: "qwen2.5:7b",
   },
@@ -28,8 +26,8 @@ export interface ChatMessage {
 }
 
 /**
- * 调用任意 OpenAI 兼容端点（OpenAI / Ollama / DeepSeek 等）。
- * OpenAI 兼容 API 语义统一，Ollama 也实现了 /v1/chat/completions。
+ * Calls any OpenAI-compatible endpoint (OpenAI / Ollama / DeepSeek, etc.).
+ * OpenAI-compatible APIs share a unified semantics, and Ollama also implements /v1/chat/completions.
  */
 async function callOpenAICompatible(
   s: ProviderSettings,
@@ -58,12 +56,12 @@ async function callOpenAICompatible(
     throw: false,
   });
   if (res.status !== 200) {
-    throw new Error(`AI 请求失败（HTTP ${res.status}）：${trimErr(res.text)}`);
+    throw new Error(t("err.requestFailed", { status: res.status, err: trimErr(res.text) }));
   }
   const json = res.json;
   const content: unknown = json?.choices?.[0]?.message?.content;
   if (typeof content !== "string") {
-    throw new Error("AI 返回内容缺失：choices[0].message.content 为空");
+    throw new Error(t("err.noContent"));
   }
   return content;
 }
@@ -99,14 +97,14 @@ async function callAnthropic(
     throw: false,
   });
   if (res.status !== 200) {
-    throw new Error(`AI 请求失败（HTTP ${res.status}）：${trimErr(res.text)}`);
+    throw new Error(t("err.requestFailed", { status: res.status, err: trimErr(res.text) }));
   }
   const parts: Array<{ type?: string; text?: string }> = res.json?.content ?? [];
   const text = parts
     .filter((p) => p.type === "text" && typeof p.text === "string")
     .map((p) => p.text as string)
     .join("");
-  if (!text) throw new Error("AI 返回内容缺失：content 无文本");
+  if (!text) throw new Error(t("err.noText"));
   return text;
 }
 
@@ -122,7 +120,7 @@ export async function chat(
     case "ollama":
       return callOpenAICompatible(s, messages, jsonMode);
     default:
-      throw new Error(`未知 Provider：${s.provider}`);
+      throw new Error(t("err.unknownProvider", { name: s.provider }));
   }
 }
 
@@ -132,8 +130,8 @@ function trimErr(t: string | undefined): string {
 }
 
 /**
- * 连通性测试：发送极小请求，验证 Base URL / Key / 模型是否可用。
- * 覆盖 OpenAI 兼容 / Anthropic / Ollama 三种 Provider，几乎不消耗 token。
+ * Connectivity test: sends a minimal request to verify that the Base URL / Key / model are usable.
+ * Covers three providers — OpenAI-compatible / Anthropic / Ollama — and consumes almost no tokens.
  */
 export async function testConnection(s: ProviderSettings): Promise<string> {
   const messages: ChatMessage[] = [

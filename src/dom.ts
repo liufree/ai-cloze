@@ -1,6 +1,6 @@
 import type { ClozeTerm } from "./types";
 
-// 直接按标签名跳过：链接、代码、预格式、脚本、数学、SVG 图、表单控件
+// Skip directly by tag name: links, code, preformatted, script, math, SVG figures, form controls
 const SKIP_TAGS: Record<string, true> = {
   A: true, CODE: true, PRE: true, SCRIPT: true, STYLE: true, "MJX-CONTAINER": true,
   SVG: true, TEXT: true, TSPAN: true, MATH: true, IMG: true,
@@ -8,10 +8,10 @@ const SKIP_TAGS: Record<string, true> = {
 };
 
 /**
- * 判断文本节点是否应被跳过。
- * 除了直接父标签，还要处理文本被嵌套进链接/代码/数学/SVG 内的情况
- * （如 `<a><strong>词</strong></a>`、`<code><em>词</em></code>`），
- * 避免破坏这些元素的结构或交互。
+ * Determines whether a text node should be skipped.
+ * Besides the direct parent tag, it also handles text nested inside links/code/math/SVG
+ * (e.g. `<a><strong>word</strong></a>`, `<code><em>word</em></code>`),
+ * to avoid breaking the structure or interactivity of these elements.
  */
 function isSkippable(el: HTMLElement): boolean {
   if (SKIP_TAGS[el.tagName]) return true;
@@ -19,9 +19,9 @@ function isSkippable(el: HTMLElement): boolean {
 }
 
 /**
- * 在渲染后的 markdown DOM 中把指定短语包装成挖空 span。
- * 只处理纯文本节点（跳过链接/代码/预格式/数学/SVG），避免破坏 markdown 结构。
- * 返回被包裹的 span 列表。
+ * Wraps the given phrases into cloze spans in the rendered markdown DOM.
+ * Only processes plain text nodes (skipping links/code/preformatted/math/SVG) to avoid breaking markdown structure.
+ * Returns the list of wrapped spans.
  */
 export function wrapClozeTerms(
   root: HTMLElement,
@@ -46,7 +46,7 @@ export function wrapClozeTerms(
     let cursor = 0;
     let idx = 0;
     while (idx < text.length) {
-      // 找最早出现的任一短语
+      // find the earliest occurrence of any phrase
       let bestTerm: ClozeTerm | null = null;
       let bestAt = -1;
       for (const t of terms) {
@@ -86,8 +86,8 @@ export function wrapClozeTerms(
 }
 
 /**
- * 根据挖空状态原地更新 span 的类名（不重建 DOM，避免闪烁）。
- * 若已挖空则按 revealed 决定是否显示答案；未挖空则移除所有状态类。
+ * Updates span class names in place according to the cloze state (no DOM rebuild, avoiding flicker).
+ * If masked, shows the answer per `revealed`; otherwise removes all state classes.
  */
 export function applyCloakClasses(
   spans: Iterable<HTMLSpanElement>,

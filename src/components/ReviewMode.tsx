@@ -2,6 +2,7 @@ import { Button, Space, Tag, Progress } from "antd";
 import { ItemView, TFile } from "obsidian";
 import { useEffect, useMemo, useRef } from "react";
 import { renderMarkdownWithCloze } from "../view";
+import { t } from "../i18n";
 import type { ClozeTerm } from "../types";
 
 export type Grade = 0 | 1 | 2 | 3;
@@ -20,12 +21,8 @@ interface Props {
   onExport: () => void;
 }
 
-const GRADE_LABEL: Record<Grade, string> = {
-  0: "再次",
-  1: "困难",
-  2: "良好",
-  3: "简单",
-};
+const GRADE_KEYS = ["grade.again", "grade.hard", "grade.good", "grade.easy"] as const;
+const gradeLabel = (g: Grade): string => t(GRADE_KEYS[g]);
 
 export function ReviewMode({
   view,
@@ -41,7 +38,7 @@ export function ReviewMode({
   onExport,
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  // 当前卡片的挖空 span（渲染完成后填充），用于原地显示答案
+  // the current card's cloze spans (filled after rendering), used to reveal the answer in place
   const spansRef = useRef<HTMLSpanElement[]>([]);
   const renderIdRef = useRef(0);
   const revealedRef = useRef(revealed);
@@ -52,7 +49,7 @@ export function ReviewMode({
   const total = maskedTerms.length;
   const finished = total > 0 && idx >= total;
 
-  // 每张卡切换时整体渲染该卡对应的挖空（原文其余部分照常显示）
+  // when switching cards, render that card's cloze wholesale (the rest of the source displays normally)
   useEffect(() => {
     if (!ref.current || !card) return;
     const id = ++renderIdRef.current;
@@ -70,7 +67,7 @@ export function ReviewMode({
     ).then((spans) => {
       if (cancelled) return;
       spansRef.current = spans;
-      // 渲染期间用户可能已点「显示答案」，用最新状态补齐类名
+      // the user may have clicked "show answer" during rendering; top up class names with the latest state
       if (revealedRef.current) {
         for (const span of spans) {
           if (span.dataset.term !== card.text) continue;
@@ -84,7 +81,7 @@ export function ReviewMode({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, file, source, terms, card]);
 
-  // 显示答案：原地给当前卡的 span 加/去 ac-revealed，不重渲染整页
+  // reveal answer: add/remove ac-revealed on the current card's spans in place, without re-rendering the page
   useEffect(() => {
     if (!card) return;
     for (const span of spansRef.current) {
@@ -99,26 +96,26 @@ export function ReviewMode({
     const mastered = gradeQueue.filter((g) => g >= 2).length;
     return (
       <div className="ac-empty">
-        <h3>本轮复习完成 🎉</h3>
-        <p>共复习 {total} 个知识点，良好/简单 {mastered} 个。</p>
-        <p className="ac-grade-queue">评分序列：{gradeQueue.map((g) => GRADE_LABEL[g]).join(" → ")}</p>
-        <p className="ac-grade-queue">已自动更新间隔记忆进度，到期后会自动进入复习队列。</p>
+        <h3>{t("review.doneTitle")}</h3>
+        <p>{t("review.doneSummary", { total, mastered })}</p>
+        <p className="ac-grade-queue">{t("review.gradeSeq", { seq: gradeQueue.map((g) => gradeLabel(g)).join(" → ") })}</p>
+        <p className="ac-grade-queue">{t("review.autoUpdated")}</p>
         <Button type="primary" onClick={onExport}>
-          导出已掌握为闪卡（==词== → 笔记）
+          {t("review.exportBtn")}
         </Button>
       </div>
     );
   }
 
   if (!card) {
-    return <div className="ac-empty">没有可复习的挖空词。请先回到阅读模式进行 AI 挖空。</div>;
+    return <div className="ac-empty">{t("review.noCards")}</div>;
   }
 
   return (
     <div className="ac-review">
       <div className="ac-review-head">
         <Space>
-          <Tag color="purple">复习模式</Tag>
+          <Tag color="purple">{t("review.modeTag")}</Tag>
           <span className="ac-review-counter">
             {idx + 1} / {total}
           </span>
@@ -131,20 +128,20 @@ export function ReviewMode({
       <div className="ac-review-actions">
         {!revealed ? (
           <Button type="primary" size="large" block onClick={onReveal}>
-            显示答案
+            {t("review.showAnswer")}
           </Button>
         ) : (
           <>
-            <div className="ac-grade-tip">这个词记住了吗？</div>
+            <div className="ac-grade-tip">{t("review.gradeTip")}</div>
             <Space wrap>
-              {(Object.keys(GRADE_LABEL) as unknown as Grade[]).map((g) => (
-                <Button key={g} size="large" danger={g === 0} type={g === 2 ? "primary" : "default"} onClick={() => onGrade(g)}>
-                  {GRADE_LABEL[g]}
+              {GRADE_KEYS.map((key, g) => (
+                <Button key={g} size="large" danger={g === 0} type={g === 2 ? "primary" : "default"} onClick={() => onGrade(g as Grade)}>
+                  {t(key)}
                 </Button>
               ))}
             </Space>
             {gradeQueue.length > 0 && (
-              <div className="ac-grade-queue">本次评分：{gradeQueue.map((g) => GRADE_LABEL[g]).join(" → ")}</div>
+              <div className="ac-grade-queue">{t("review.thisGrades", { seq: gradeQueue.map((g) => gradeLabel(g)).join(" → ") })}</div>
             )}
           </>
         )}
