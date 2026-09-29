@@ -1,0 +1,28 @@
+src/ai.ts
+  h_28a1a1f8bfa14e 1,61-64,105-106
+src/cloze.ts
+  h_28a1a1f8bfa14e 30
+src/components/App.tsx
+  h_28a1a1f8bfa14e 187,260-262
+src/components/ReadingMode.tsx
+  h_28a1a1f8bfa14e 60
+src/components/ReviewMode.tsx
+  h_28a1a1f8bfa14e 81
+src/main.tsx
+  h_28a1a1f8bfa14e 1,25,147
+src/settings.ts
+  h_28a1a1f8bfa14e 40,60-62,272,282,284
+src/view.tsx
+  h_28a1a1f8bfa14e 45,64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "e21b01ce4c0eff5a84b65a54946e842bc3ef9bd8",
+  "prompts": {},
+  "humans": {
+    "h_28a1a1f8bfa14e": {
+      "author": "liufree <liufreeo@gmail.com>"
+    }
+  }
+}
