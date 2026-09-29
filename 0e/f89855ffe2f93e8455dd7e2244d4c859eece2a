@@ -1,0 +1,14 @@
+manifest.json
+  h_28a1a1f8bfa14e 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "0ef89855ffe2f93e8455dd7e2244d4c859eece2a",
+  "prompts": {},
+  "humans": {
+    "h_28a1a1f8bfa14e": {
+      "author": "liufree <liufreeo@gmail.com>"
+    }
+  }
+}
