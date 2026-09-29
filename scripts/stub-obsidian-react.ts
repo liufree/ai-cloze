@@ -1,4 +1,5 @@
 // obsidian stub for ReadingMode/ReviewMode render test: renders markdown → simple DOM
+export const getLanguage = () => "en";
 export const requestUrl = async () => {
   throw new Error("stub requestUrl");
 };
