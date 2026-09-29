@@ -1,9 +1,9 @@
 {
   "id": "ai-cloze",
-  "name": "AI Cloze 挖空阅读",
+  "name": "AI Cloze Reading",
   "version": "1.0.0",
   "minAppVersion": "1.4.0",
-  "description": "AI 智能挖空阅读视图：打开任意笔记生成挖空阅读视图，支持调整挖空密度、记住上次 AI 挖空结果（除非点击重新挖空）、间隔复习记忆模式（与 Obsidian API 打通）。支持自定义 AI Provider 与模型。",
+  "description": "AI-powered cloze reading view: open any note to generate a cloze reading view, adjust cloze density, remember the last AI cloze result (unless you regenerate), and spaced-repetition review mode (integrated with the Obsidian API). Supports custom AI providers and models.",
   "author": "liufree",
   "authorUrl": "https://github.com/liufree",
   "isDesktopOnly": false
