@@ -1,0 +1,42 @@
+README.md
+  h_28a1a1f8bfa14e 13,20
+README.zh.md
+  h_28a1a1f8bfa14e 13,20
+src/ai.ts
+  h_28a1a1f8bfa14e 3,7,29-30,59,64,100,107,123,133-134
+src/cloze.ts
+  h_28a1a1f8bfa14e 3,5-8,10,27,40,49,54,63,72,74-77,79-80,83,92-93
+src/components/App.tsx
+  h_28a1a1f8bfa14e 9,86,91,102,146-147,152,162,172,177,184,257,262,272,278,300-301,304,306,309,312,329,333-334,337,343,349,353,357,359
+src/components/ReadingMode.tsx
+  h_28a1a1f8bfa14e 19,21,28,53,63,72
+src/components/ReviewMode.tsx
+  h_28a1a1f8bfa14e 5,24-25,41,52,70,84,99-102,104,111,118,131,135,137-139,144
+src/dom.ts
+  h_28a1a1f8bfa14e 3,11-14,22-24,49,89-90
+src/i18n.ts
+  h_28a1a1f8bfa14e 1-292
+src/main.tsx
+  h_28a1a1f8bfa14e 6,12,15,18,26,32,43,54,63,68-70,92,94,101,124,132
+src/settings.ts
+  h_28a1a1f8bfa14e 5-6,19,40,43-66,70,78,97-100,110-114,124-127,137-138,151-152,165-166,168,170,173,175,178,184-185,198-199,208-209,218-219,222-224,235-239,253-257,270-271,273,277,284
+src/srs.ts
+  h_28a1a1f8bfa14e 3,11,20
+src/styles.css
+  h_28a1a1f8bfa14e 1,62,90
+src/types.ts
+  h_28a1a1f8bfa14e 10,15,17,21,23,25,27,29,31,33,37,41,43,45,47,49,51,53,60-62,64,66,68,70
+src/view.tsx
+  h_28a1a1f8bfa14e 8,34,56,92-95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "b747483248c4b4ca9c66c21746e89a0e90e41e08",
+  "prompts": {},
+  "humans": {
+    "h_28a1a1f8bfa14e": {
+      "author": "liufree <liufreeo@gmail.com>"
+    }
+  }
+}
