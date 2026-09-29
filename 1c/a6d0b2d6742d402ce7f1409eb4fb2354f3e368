@@ -1,0 +1,24 @@
+esbuild.config.mjs
+  h_28a1a1f8bfa14e 20
+manifest.json
+  h_28a1a1f8bfa14e 4
+package.json
+  h_28a1a1f8bfa14e 3
+scripts/react-test.mjs
+  h_28a1a1f8bfa14e 20-21
+scripts/smoke.mjs
+  h_28a1a1f8bfa14e 100-101,130-131,162-163
+versions.json
+  h_28a1a1f8bfa14e 2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "1ca6d0b2d6742d402ce7f1409eb4fb2354f3e368",
+  "prompts": {},
+  "humans": {
+    "h_28a1a1f8bfa14e": {
+      "author": "liufree <liufreeo@gmail.com>"
+    }
+  }
+}
