@@ -1,4 +1,4 @@
-import { App, Notice, PluginSettingTab, Setting, TFolder } from "obsidian";
+import { App, Notice, PluginSettingTab, TFolder } from "obsidian";
 import type { SettingDefinitionItem } from "obsidian";
 import { PROVIDER_PRESETS, testConnection } from "./ai";
 import type AIClozePlugin from "./main";

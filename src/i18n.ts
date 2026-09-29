@@ -277,7 +277,7 @@ const en: Record<string, string> = {
 /** 替换 {key} 占位符 */
 function fill(template: string, params?: Record<string, string | number>): string {
   if (!params) return template;
-  return template.replace(/\{(\w+)\}/g, (m, k) =>
+  return template.replace(/\{(\w+)\}/g, (m, k: string) =>
     k in params ? String(params[k]) : m
   );
 }

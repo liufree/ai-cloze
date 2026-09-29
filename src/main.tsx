@@ -113,7 +113,7 @@ export default class AIClozePlugin extends Plugin {
       const cache = this.app.metadataCache.getFileCache(file);
       const tags: string[] = [];
       for (const t of cache?.tags ?? []) tags.push(t.tag.replace(/^#/, ""));
-      const fm = cache?.frontmatter?.tags;
+      const fm = cache?.frontmatter?.tags as string | string[] | undefined;
       if (typeof fm === "string") tags.push(fm.replace(/^#/, ""));
       else if (Array.isArray(fm)) tags.push(...fm.map((x) => String(x).replace(/^#/, "")));
       return wanted.some((w) => tags.some((t) => t === w || t.startsWith(`${w}/`)));

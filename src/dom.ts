@@ -42,7 +42,7 @@ export function wrapClozeTerms(
   for (const node of textNodes) {
     const text = node.nodeValue || "";
     let changed = false;
-    const frag = document.createDocumentFragment();
+    const frag = createFragment();
     let cursor = 0;
     let idx = 0;
     while (idx < text.length) {
@@ -60,7 +60,7 @@ export function wrapClozeTerms(
       if (bestAt > cursor) {
         frag.appendChild(document.createTextNode(text.slice(cursor, bestAt)));
       }
-      const span = document.createElement("span");
+      const span = createSpan();
       span.className = "ac-cloze";
       span.dataset.term = bestTerm.text;
       if (masked.has(bestTerm.text)) {

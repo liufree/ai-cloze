@@ -1,6 +1,6 @@
 {
   "name": "ai-cloze",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "ai-cloze：AI 智能挖空阅读视图 + 复习记忆模式（Obsidian 插件）",
   "main": "dist/main.js",
   "scripts": {
