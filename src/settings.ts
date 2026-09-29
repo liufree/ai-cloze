@@ -2,6 +2,8 @@ import { App, Notice, PluginSettingTab, Setting, TFolder } from "obsidian";
 import { PROVIDER_PRESETS, testConnection } from "./ai";
 import type AIClozePlugin from "./main";
 import type { ProviderKind } from "./types";
+import { applyLanguage, t } from "./i18n";
+import { ClozeView, VIEW_TYPE_AI_CLOZE } from "./view";
 
 export const DEFAULT_SETTINGS = {
   provider: {
@@ -14,6 +16,7 @@ export const DEFAULT_SETTINGS = {
     useProxy: false,
   },
   defaultDensity: 60,
+  language: "system" as "system" | "zh" | "en",
   autoCloze: false,
   backgroundCloze: false,
   backgroundScope: "all" as "all" | "tag" | "folder",
@@ -34,15 +37,37 @@ export class AIClozeSettingTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "ai-cloze · AI 挖空阅读" });
+    containerEl.createEl("h2", { text: t("settings.title") });
 
     new Setting(containerEl)
-      .setName("Provider")
-      .setDesc("选择 AI 服务商。OpenAI 兼容接口可用于 OpenAI / DeepSeek / Moonshot 等；Ollama 为本地模型。")
+      .setName(t("settings.languageName"))
+      .setDesc(t("settings.languageDesc"))
+      .addDropdown((dd) =>
+        dd
+          .addOption("system", t("settings.languageSystem"))
+          .addOption("zh", "中文")
+          .addOption("en", "English")
+          .setValue(this.plugin.settings.language)
+          .onChange(async (v) => {
+            const lang = v as "system" | "zh" | "en";
+            this.plugin.settings.language = lang;
+            await this.plugin.saveData(this.plugin.settings);
+            applyLanguage(lang);
+            this.display();
+            // make already-open cloze views switch language immediately
+            this.plugin.app.workspace
+              .getLeavesOfType(VIEW_TYPE_AI_CLOZE)
+              .forEach((leaf) => (leaf.view as ClozeView).refresh());
+          })
+      );
+
+    new Setting(containerEl)
+      .setName(t("settings.providerName"))
+      .setDesc(t("settings.providerDesc"))
       .addDropdown((dd) => {
         dd.addOptions(
           Object.fromEntries(
-            Object.entries(PROVIDER_PRESETS).map(([k, v]) => [k, v.label])
+            Object.keys(PROVIDER_PRESETS).map((k) => [k, t(`provider.${k}`)])
           )
         )
           .setValue(this.plugin.settings.provider.provider)
@@ -50,7 +75,7 @@ export class AIClozeSettingTab extends PluginSettingTab {
             const kind = val as ProviderKind;
             const presets = PROVIDER_PRESETS[kind];
             const prev = this.plugin.settings.provider;
-            // 切换服务商时：若 baseUrl 仍是旧预设默认值，则跟随新预设
+            // when switching providers: if baseUrl is still the old preset default, follow the new preset
             this.plugin.settings.provider = {
               ...prev,
               provider: kind,
@@ -69,10 +94,10 @@ export class AIClozeSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName("API 地址（Base URL）")
-      .setDesc("OpenAI 兼容端点，如 https://api.openai.com/v1 或 http://localhost:11434/v1（Ollama）")
-      .addText((t) =>
-        t
+      .setName(t("settings.baseUrlName"))
+      .setDesc(t("settings.baseUrlDesc"))
+      .addText((txt) =>
+        txt
           .setPlaceholder(PROVIDER_PRESETS[this.plugin.settings.provider.provider].baseUrl)
           .setValue(this.plugin.settings.provider.baseUrl)
           .onChange(async (v) => {
@@ -82,11 +107,11 @@ export class AIClozeSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("API Key")
-      .setDesc("本地 Ollama 可留空。密钥仅保存在本机 data.json。")
-      .addText((t) => {
-        t.inputEl.type = "password";
-        return t
+      .setName(t("settings.apiKeyName"))
+      .setDesc(t("settings.apiKeyDesc"))
+      .addText((txt) => {
+        txt.inputEl.type = "password";
+        return txt
           .setPlaceholder("sk-…")
           .setValue(this.plugin.settings.provider.apiKey)
           .onChange(async (v) => {
@@ -96,10 +121,10 @@ export class AIClozeSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName("模型（Model）")
-      .setDesc("例如 gpt-4o-mini / claude-3-5-haiku-latest / qwen2.5:7b")
-      .addText((t) =>
-        t
+      .setName(t("settings.modelName"))
+      .setDesc(t("settings.modelDesc"))
+      .addText((txt) =>
+        txt
           .setPlaceholder(PROVIDER_PRESETS[this.plugin.settings.provider.provider].defaultModel)
           .setValue(this.plugin.settings.provider.model)
           .onChange(async (v) => {
@@ -109,8 +134,8 @@ export class AIClozeSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("温度（Temperature）")
-      .setDesc("越低越稳定。挖空推荐 0.1 - 0.5。")
+      .setName(t("settings.tempName"))
+      .setDesc(t("settings.tempDesc"))
       .addSlider((sl) =>
         sl
           .setLimits(0, 1, 0.1)
@@ -123,8 +148,8 @@ export class AIClozeSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("最大输出 Token")
-      .setDesc("AI 返回挖空列表的最大 token 数。")
+      .setName(t("settings.maxTokensName"))
+      .setDesc(t("settings.maxTokensDesc"))
       .addSlider((sl) =>
         sl
           .setLimits(500, 8000, 500)
@@ -137,27 +162,27 @@ export class AIClozeSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("测试 AI 连通性")
-      .setDesc("发送一个极小请求，验证 API 地址、Key 与模型是否可用（几乎不消耗 token）。")
+      .setName(t("settings.testName"))
+      .setDesc(t("settings.testDesc"))
       .addButton((b) =>
-        b.setButtonText("测试连通").onClick(async () => {
+        b.setButtonText(t("settings.testButton")).onClick(async () => {
           b.setDisabled(true);
-          b.setButtonText("测试中…");
+          b.setButtonText(t("settings.testingButton"));
           try {
             const reply = await testConnection(this.plugin.settings.provider);
-            new Notice(`✅ AI 连通成功：${reply.slice(0, 80)}`, 6000);
+            new Notice(`✅ ${t("msg.connectionOk")}: ${reply.slice(0, 80)}`, 6000);
           } catch (e) {
-            new Notice(`❌ 连通失败：${e instanceof Error ? e.message : String(e)}`, 10000);
+            new Notice(`❌ ${t("msg.connectionFail")}: ${e instanceof Error ? e.message : String(e)}`, 10000);
           } finally {
             b.setDisabled(false);
-            b.setButtonText("测试连通");
+            b.setButtonText(t("settings.testButton"));
           }
         })
       );
 
     new Setting(containerEl)
-      .setName("默认挖空密度")
-      .setDesc("0-100，默认每次打开时挖空的比例。可在阅读视图中单独调整。")
+      .setName(t("settings.densityName"))
+      .setDesc(t("settings.densityDesc"))
       .addSlider((sl) =>
         sl
           .setLimits(0, 100, 5)
@@ -170,8 +195,8 @@ export class AIClozeSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("自动挖空（打开视图时）")
-      .setDesc("开启后，打开挖空视图时若该笔记没有缓存，会自动调用 AI 生成。长文会消耗大量 token，请按需开启。")
+      .setName(t("settings.autoClozeName"))
+      .setDesc(t("settings.autoClozeDesc"))
       .addToggle((tg) =>
         tg.setValue(this.plugin.settings.autoCloze).onChange(async (v) => {
           this.plugin.settings.autoCloze = v;
@@ -180,8 +205,8 @@ export class AIClozeSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("后台预生成")
-      .setDesc("独立开关：无需打开挖空视图，切换到符合条件的笔记时就在后台预生成缓存，点开视图即可直接看到结果。")
+      .setName(t("settings.bgName"))
+      .setDesc(t("settings.bgDesc"))
       .addToggle((tg) =>
         tg.setValue(this.plugin.settings.backgroundCloze).onChange(async (v) => {
           this.plugin.settings.backgroundCloze = v;
@@ -190,13 +215,13 @@ export class AIClozeSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("后台预生成范围")
-      .setDesc("选择后台预生成适用哪些笔记，避免对所有笔记都消耗 token。")
+      .setName(t("settings.bgScopeName"))
+      .setDesc(t("settings.bgScopeDesc"))
       .addDropdown((dd) =>
         dd
-          .addOption("all", "全部笔记")
-          .addOption("tag", "仅指定标签")
-          .addOption("folder", "仅指定文件夹")
+          .addOption("all", t("settings.scopeAll"))
+          .addOption("tag", t("settings.scopeTag"))
+          .addOption("folder", t("settings.scopeFolder"))
           .setValue(this.plugin.settings.backgroundScope)
           .onChange(async (v) => {
             this.plugin.settings.backgroundScope = v as "all" | "tag" | "folder";
@@ -207,11 +232,11 @@ export class AIClozeSettingTab extends PluginSettingTab {
 
     if (this.plugin.settings.backgroundScope === "tag") {
       new Setting(containerEl)
-        .setName("后台预生成标签")
-        .setDesc("逗号分隔的标签（# 可省略，支持子标签前缀，如「学习」匹配「学习/xxx」）。留空则不预生成。")
-        .addText((t) =>
-          t
-            .setPlaceholder("学习, 待复习")
+        .setName(t("settings.bgTagName"))
+        .setDesc(t("settings.bgTagDesc"))
+        .addText((txt) =>
+          txt
+            .setPlaceholder(t("settings.bgTagPlaceholder"))
             .setValue(this.plugin.settings.backgroundTags.join(", "))
             .onChange(async (v) => {
               this.plugin.settings.backgroundTags = v
@@ -225,11 +250,11 @@ export class AIClozeSettingTab extends PluginSettingTab {
 
     if (this.plugin.settings.backgroundScope === "folder") {
       new Setting(containerEl)
-        .setName("后台预生成文件夹")
-        .setDesc("逗号分隔的文件夹路径（相对库根，如「03-领域/编程」）。留空则不预生成。")
-        .addText((t) =>
-          t
-            .setPlaceholder("03-领域, 05-学习")
+        .setName(t("settings.bgFolderName"))
+        .setDesc(t("settings.bgFolderDesc"))
+        .addText((txt) =>
+          txt
+            .setPlaceholder(t("settings.bgFolderPlaceholder"))
             .setValue(this.plugin.settings.backgroundFolders.join(", "))
             .onChange(async (v) => {
               this.plugin.settings.backgroundFolders = v
@@ -242,21 +267,21 @@ export class AIClozeSettingTab extends PluginSettingTab {
     }
 
     new Setting(containerEl)
-      .setName("清除全部记忆数据")
-      .setDesc("删除所有笔记的挖空缓存与复习进度（不会改动笔记文件）。")
+      .setName(t("settings.clearName"))
+      .setDesc(t("settings.clearDesc"))
       .addButton((b) =>
-        b.setButtonText("清空").setWarning().onClick(async () => {
+        b.setButtonText(t("settings.clearButton")).setWarning().onClick(async () => {
           this.plugin.settings.clozeCache = {};
           this.plugin.settings.review = {};
           await this.plugin.saveData(this.plugin.settings);
-          new Notice("ai-cloze 记忆数据已清空");
+          new Notice(t("notice.memoryCleared"));
           this.display();
         })
       );
 
     this.containerEl.createEl("hr");
     this.containerEl.createEl("p", {
-      text: `当前库：${(this.app.vault.getRoot() as TFolder).path || "/"} · 数据保存在插件 data.json`,
+      text: t("settings.footer", { path: (this.app.vault.getRoot() as TFolder).path || "/" }),
       attr: { style: "color: var(--text-muted); font-size: var(--font-smallest);" },
     });
   }

@@ -16,16 +16,16 @@ interface Props {
 
 export function ReadingMode({ view, file, source, terms, masked, revealed, onToggleTerm }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  // term → 对应所有挖空 span（渲染完成后填充），用于原地更新类名
+  // term → all its cloze spans (filled after rendering), used to update class names in place
   const spansRef = useRef<Map<string, HTMLSpanElement[]>>(new Map());
-  // 渲染序号：内容变化时自增，旧渲染通过 isStale 自动放弃
+  // render sequence number: increments when content changes; stale renders are abandoned via isStale
   const renderIdRef = useRef(0);
   const maskedRef = useRef(masked);
   const revealedRef = useRef(revealed);
   maskedRef.current = masked;
   revealedRef.current = revealed;
 
-  // 仅原文/挖空词表变化才整体重渲染；挖空状态变化只更新类名，避免整页闪烁
+  // only re-render wholesale when the source/cloze term list changes; cloze state changes only update class names, avoiding whole-page flicker
   useEffect(() => {
     const id = ++renderIdRef.current;
     const map = new Map<string, HTMLSpanElement[]>();
@@ -50,7 +50,7 @@ export function ReadingMode({ view, file, source, terms, masked, revealed, onTog
           else map.set(term, [span]);
         }
         spansRef.current = map;
-        // 渲染期间状态可能又变了，用最新状态补齐类名
+        // state may have changed again during rendering; top up class names with the latest state
         applyCloakClasses(spans, maskedRef.current, revealedRef.current);
       });
     }
@@ -60,7 +60,7 @@ export function ReadingMode({ view, file, source, terms, masked, revealed, onTog
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, file, source, terms]);
 
-  // masked/revealed 变化：原地切换类名，不重建 DOM
+  // masked/revealed changes: toggle class names in place without rebuilding the DOM
   useEffect(() => {
     applyCloakClasses([...spansRef.current.values()].flat(), masked, revealed);
   }, [masked, revealed]);
@@ -69,7 +69,7 @@ export function ReadingMode({ view, file, source, terms, masked, revealed, onTog
     const target = e.target as HTMLElement;
     const span = target.closest<HTMLElement>(".ac-cloze.ac-masked");
     if (!span?.dataset.term) return;
-    // 先原地切换当前 span，无整页重渲染的闪烁；再同步 React 状态保持工具栏一致
+    // first toggle the current span in place (no whole-page re-render flicker); then sync React state to keep the toolbar consistent
     span.classList.toggle("ac-revealed");
     onToggleTerm(span.dataset.term);
   };

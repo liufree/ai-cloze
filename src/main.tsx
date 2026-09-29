@@ -3,18 +3,19 @@ import { DEFAULT_SETTINGS, AIClozeSettingTab } from "./settings";
 import type { AIClozeData } from "./types";
 import { generateClozeTerms, hashText } from "./cloze";
 import { ClozeView, VIEW_TYPE_AI_CLOZE } from "./view";
+import { applyLanguage, t } from "./i18n";
 
 export default class AIClozePlugin extends Plugin {
 
   settings!: AIClozeData;
 
-  /** 正在后台生成挖空的笔记路径（去重，避免重复并发调用） */
+  /** Note paths currently being cloze-generated in the background (deduplicated to avoid duplicate concurrent calls) */
   public generatingPaths = new Set<string>();
 
-  /** 后台生成结束（成功/失败/无结果）时的订阅者 */
+  /** Subscribers notified when background generation finishes (success/failure/no result) */
   private backgroundDoneHandlers = new Set<(path: string) => void>();
 
-  /** 订阅后台生成完成事件，返回取消订阅函数 */
+  /** Subscribe to background-generation-complete events; returns an unsubscribe function */
   public onBackgroundDone(handler: (path: string) => void): () => void {
     this.backgroundDoneHandlers.add(handler);
     return () => this.backgroundDoneHandlers.delete(handler);
@@ -22,12 +23,13 @@ export default class AIClozePlugin extends Plugin {
 
   async onload() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    applyLanguage(this.settings.language);
 
     this.registerView(VIEW_TYPE_AI_CLOZE, (leaf) => new ClozeView(leaf, this));
 
     this.addCommand({
       id: "open-cloze-view",
-      name: "打开当前笔记的 AI 挖空阅读视图",
+      name: t("cmd.openView"),
       checkCallback: (checking) => {
         const file = this.app.workspace.getActiveFile();
         if (!file || file.extension !== "md") return false;
@@ -38,7 +40,7 @@ export default class AIClozePlugin extends Plugin {
 
     this.addCommand({
       id: "open-cloze-view-and-generate",
-      name: "打开 AI 挖空阅读视图（重新 AI 挖空）",
+      name: t("cmd.openViewGenerate"),
       checkCallback: (checking) => {
         const file = this.app.workspace.getActiveFile();
         if (!file || file.extension !== "md") return false;
@@ -49,7 +51,7 @@ export default class AIClozePlugin extends Plugin {
 
     this.addSettingTab(new AIClozeSettingTab(this.app, this));
 
-    // 给 markdown 阅读/编辑视图头部加「AI 挖空」跳转按钮
+    // add an "AI Cloze" jump button to the header of markdown reading/editing views
     this.registerEvent(this.app.workspace.on("layout-change", () => this.ensureDocButton()));
     this.registerEvent(
       this.app.workspace.on("active-leaf-change", () => {
@@ -58,14 +60,14 @@ export default class AIClozePlugin extends Plugin {
       })
     );
     this.ensureDocButton();
-    // 启动时为当前笔记后台预生成（若开启后台预生成）
+    // background-pre-generate the current note on startup (if background generation is enabled)
     void this.generateInBackground(this.app.workspace.getActiveFile());
   }
 
   /**
-   * 后台自动挖空：尚未打开挖空视图时，提前为当前笔记生成缓存，
-   * 这样用户点开 AI 挖空视图即可直接看到结果，无需在视图里再等 AI。
-   * 由独立的「后台预生成」开关 + 范围（全部/标签/文件夹）控制。
+   * Background auto-clozing: while the cloze view isn't open, generates a cache for the current note in advance,
+   * so the user immediately sees results when opening the AI cloze view instead of waiting for the AI inside it.
+   * Controlled by a separate "background pre-generation" toggle plus a scope (all/tag/folder).
    */
   async generateInBackground(file: TFile | null): Promise<void> {
     if (!file || !this.settings.backgroundCloze) return;
@@ -87,16 +89,16 @@ export default class AIClozePlugin extends Plugin {
         model: this.settings.provider.model,
       };
       await this.saveData(this.settings);
-      new Notice(`已后台生成「${file.basename}」挖空（${terms.length} 个知识点）`);
+      new Notice(t("notice.backgroundDone", { name: file.basename, count: terms.length }));
     } catch (e) {
-      new Notice(`后台挖空失败：${e instanceof Error ? e.message : String(e)}`, 8000);
+      new Notice(t("notice.backgroundFail", { err: e instanceof Error ? e.message : String(e) }), 8000);
     } finally {
       this.generatingPaths.delete(path);
       for (const handler of this.backgroundDoneHandlers) handler(path);
     }
   }
 
-  /** 判断某笔记是否属于「后台预生成」范围 */
+  /** Determine whether a note falls within the "background pre-generation" scope */
   private matchesBackgroundScope(file: TFile): boolean {
     const scope = this.settings.backgroundScope;
     if (scope === "folder") {
@@ -119,7 +121,7 @@ export default class AIClozePlugin extends Plugin {
     return true;
   }
 
-  /** 已加过按钮的 markdown 视图（视图实例复用，避免重复添加） */
+  /** Markdown views that already have a button added (view instances are reused to avoid duplicate additions) */
   private docButtonViews = new WeakSet<MarkdownView>();
   private docButtonEls: HTMLElement[] = [];
 
@@ -127,7 +129,7 @@ export default class AIClozePlugin extends Plugin {
     const view = this.app.workspace.getActiveViewOfType(MarkdownView);
     if (!view || this.docButtonViews.has(view)) return;
     this.docButtonViews.add(view);
-    const el = view.addAction("target", "打开 AI 挖空阅读视图", () => {
+    const el = view.addAction("target", t("action.openView"), () => {
       const file = view.file;
       if (file) void this.openClozeView(file);
     });

@@ -6,6 +6,7 @@ import type { ClozeTerm, NoteClozeCache } from "../types";
 import type { ClozeView } from "../view";
 import type AIClozePlugin from "../main";
 import { cardKey, reviewCard, isDue } from "../srs";
+import { t } from "../i18n";
 import { ReadingMode } from "./ReadingMode";
 import { ReviewMode, type Grade } from "./ReviewMode";
 
@@ -82,12 +83,12 @@ function AppInner({ plugin, view }: Props) {
     void loadFile(activeFile);
   }, [activeFile?.path, loadFile]);
 
-  // 后台预生成进行中：打开视图时检测是否正在后台生成，进入等待态
+  // background pre-generation in progress: when opening the view, detect whether background generation is running and enter a waiting state
   useEffect(() => {
     setBgGenerating(!!activeFile && plugin.generatingPaths.has(activeFile.path));
   }, [activeFile?.path, plugin]);
 
-  // 后台生成完成后：接管结果，直接渲染缓存，无需手动触发
+  // after background generation completes: take over the result and render the cache directly, no manual trigger needed
   useEffect(() => {
     const off = plugin.onBackgroundDone((path) => {
       const current = view.getFile();
@@ -98,7 +99,7 @@ function AppInner({ plugin, view }: Props) {
     return off;
   }, [plugin, loadFile, view]);
 
-  // 监听原文变化：文件修改后重读，并标记缓存可能过期
+  // watch the source for changes: re-read after the file is modified and flag the cache as possibly stale
   useEffect(() => {
     const handler = (changed: unknown) => {
       if (!(changed instanceof TFile) || changed.path !== activeFile?.path) return;
@@ -142,13 +143,13 @@ function AppInner({ plugin, view }: Props) {
   const doGenerate = useCallback(
     async (force: boolean) => {
       if (!file) return;
-      if (plugin.generatingPaths.has(file.path)) return; // 后台正在生成，等待其完成，避免重复并发
-      if (!force && plugin.settings.clozeCache[file.path]) return; // 已缓存，除非强制重新挖空
+      if (plugin.generatingPaths.has(file.path)) return; // background generation in progress; wait for it to finish to avoid duplicate concurrent runs
+      if (!force && plugin.settings.clozeCache[file.path]) return; // already cached, unless forced to re-cloze
       setGenerating(true);
       try {
         const newTerms = await generateClozeTerms(plugin.settings.provider, source);
         if (newTerms.length === 0) {
-          api.warning("AI 未返回有效挖空词，请检查 Provider 配置或重试");
+          api.warning(t("msg.aiEmpty"));
           return;
         }
         setTerms(newTerms);
@@ -158,7 +159,7 @@ function AppInner({ plugin, view }: Props) {
         setReviewIdx(0);
         setReviewRevealed(false);
         setGradeQueue([]);
-        api.success(`AI 挖空完成，共 ${newTerms.length} 个知识点`);
+        api.success(t("msg.clozeDone", { count: newTerms.length }));
       } catch (e) {
         api.error(e instanceof Error ? e.message : String(e));
       } finally {
@@ -168,19 +169,19 @@ function AppInner({ plugin, view }: Props) {
     [plugin, file, source, density, saveCache, api]
   );
 
-  // 打开时：若有缓存直接使用；没有缓存时按「自动挖空」开关决定是否调用 AI（forceGenerate 由命令传入）
+  // on open: use the cache directly if present; otherwise decide whether to call the AI based on the "auto cloze" toggle (forceGenerate is passed by command)
   useEffect(() => {
     if (!file || generating) return;
     if (view.state.forceGenerate) {
       void doGenerate(true);
-      // 一次性消费，避免下次重新打开同一视图时再次强制挖空
+      // consume it once, so reopening the same view later doesn't force cloze again
       view.state.forceGenerate = false;
     } else if (
       plugin.settings.autoCloze &&
       !plugin.settings.clozeCache[file.path] &&
       !plugin.generatingPaths.has(file.path)
     ) {
-      api.info("已开启自动挖空，正在调用 AI 生成（会消耗较多 token）…");
+      api.info(t("msg.autoCloze"));
       void doGenerate(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -253,12 +254,12 @@ function AppInner({ plugin, view }: Props) {
 
   const exportFlashcards = useCallback(async () => {
     if (!file) return;
-    // 把本次复习中评为良好/简单的词，以 ==term== 形式写回笔记闪卡区（兼容 Spaced Repetition）
+    // write terms graded good/easy in this review session back to the note's flashcard section as ==term== (compatible with Spaced Repetition)
     const maskedTerms = terms.filter((t) => masked.has(t.text));
     const reviewed = gradeQueue.map((g, i) => ({ g, term: maskedTerms[i]?.text }));
     const mastered = reviewed.filter((r) => r.g >= 2 && r.term).map((r) => r.term as string);
     if (mastered.length === 0) {
-      api.info("本次没有评分良好/简单的词可导出");
+      api.info(t("msg.noExport"));
       return;
     }
     const orig = await plugin.app.vault.read(file);
@@ -268,13 +269,13 @@ function AppInner({ plugin, view }: Props) {
         ? `${orig.replace(/\s*$/, "")}\n${lines.join("\n")}\n`
         : `${orig.replace(/\s*$/, "")}\n\n## 🎴 挖空闪卡\n\n#flashcards 复习/闪卡\n${lines.join("\n")}\n`;
     await plugin.app.vault.modify(file, section);
-    api.success(`已将 ${mastered.length} 个词写入笔记闪卡区`);
+    api.success(t("msg.exported", { count: mastered.length }));
   }, [file, terms, masked, gradeQueue, plugin, api]);
 
   if (!file) {
     return (
       <div className="ac-empty">
-        请先打开一篇 Markdown 笔记，再用命令面板运行「打开当前笔记的 AI 挖空阅读视图」。
+        {t("empty.noFile")}
       </div>
     );
   }
@@ -296,19 +297,19 @@ function AppInner({ plugin, view }: Props) {
                 setGradeQueue([]);
               }}
               options={[
-                { label: "阅读挖空", value: "read" },
-                { label: "复习记忆", value: "review" },
+                { label: t("mode.read"), value: "read" },
+                { label: t("mode.review"), value: "review" },
               ]}
             />
-            <Tooltip title={hasCache ? "读取上次 AI 生成结果；点击此按钮才会重新调用 AI" : "尚无缓存"}>
+            <Tooltip title={hasCache ? t("tag.cacheHint") : t("tag.noCache")}>
               <Tag color={stale ? "orange" : hasCache ? "green" : bgGenerating ? "processing" : "default"}>
-                {stale ? "原文已修改" : hasCache ? `上次挖空 · ${plugin.settings.clozeCache[file.path].model}` : bgGenerating ? "后台生成中…" : "未挖空"}
+                {stale ? t("tag.stale") : hasCache ? t("tag.lastCloze", { model: plugin.settings.clozeCache[file.path].model }) : bgGenerating ? t("tag.bgGenerating") : t("tag.notClozed")}
               </Tag>
             </Tooltip>
-            {mode === "review" && dueCount > 0 && <Tag color="red">{dueCount} 张到期</Tag>}
+            {mode === "review" && dueCount > 0 && <Tag color="red">{t("tag.dueCount", { count: dueCount })}</Tag>}
           </Space>
           <Space wrap>
-            <span className="ac-density-label">挖空密度</span>
+            <span className="ac-density-label">{t("toolbar.density")}</span>
             <Slider
               style={{ width: 140 }}
               min={0}
@@ -325,37 +326,37 @@ function AppInner({ plugin, view }: Props) {
               disabled={mode === "review" || bgGenerating}
               onClick={() => void doGenerate(true)}
             >
-              重新 AI 挖空
+              {t("toolbar.regenerate")}
             </Button>
             {mode === "read" && terms.length > 0 && (
               <>
-                <Button onClick={revealAll}>显示全部</Button>
-                <Button onClick={hideAll}>隐藏全部</Button>
+                <Button onClick={revealAll}>{t("toolbar.revealAll")}</Button>
+                <Button onClick={hideAll}>{t("toolbar.hideAll")}</Button>
               </>
             )}
-            <Button onClick={() => void view.openOriginal()}>回到原文档</Button>
+            <Button onClick={() => void view.openOriginal()}>{t("toolbar.backToDoc")}</Button>
           </Space>
         </div>
 
         <div className="ac-status">
           <Tag>{plugin.settings.provider.provider} · {plugin.settings.provider.model}</Tag>
-          <Tag color={masteredCount > 0 ? "green" : "default"}>已掌握 {masteredCount}</Tag>
+          <Tag color={masteredCount > 0 ? "green" : "default"}>{t("status.mastered", { count: masteredCount })}</Tag>
         </div>
 
         <div className="ac-body">
           {bgGenerating ? (
             <div className="ac-loading">
-              <Spin tip="正在后台生成挖空词…（完成后自动显示）" size="large" />
+              <Spin tip={t("loading.bg")} size="large" />
             </div>
           ) : generating && terms.length === 0 ? (
             <div className="ac-loading">
-              <Spin tip="AI 正在分析并生成挖空词…" size="large" />
+              <Spin tip={t("loading.generate")} size="large" />
             </div>
           ) : terms.length === 0 ? (
             <div className="ac-empty">
-              <p>这篇笔记还没有挖空结果。</p>
+              <p>{t("empty.noResult")}</p>
               <Button type="primary" loading={generating} onClick={() => void doGenerate(true)}>
-                AI 智能挖空
+                {t("button.generate")}
               </Button>
             </div>
           ) : mode === "read" ? (

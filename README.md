@@ -10,12 +10,13 @@ AI-powered cloze reading view + spaced-repetition review mode. Stack: Obsidian P
 2. **Configurable provider & model**: The settings panel supports OpenAI-compatible / Anthropic / Ollama (local), with Base URL, API Key, model, temperature, and max tokens; a "Test AI connection" button fires a minimal request to verify connectivity in one click.
 3. **Adjustable cloze density**: A 0–100% slider adjusts the blank ratio in real time (top-N% ranked by AI importance).
 4. **Memory & auto-cloze switches**: Each open reads the per-note cache (`data.json`) directly for the last result; the AI is only re-invoked when you click "Re-cloze with AI"; a yellow hint appears when "original note modified". Enable "auto cloze" in settings to invoke the AI automatically when opening an uncached note (long notes consume a lot of tokens; a hint is shown when this triggers).
-5. **Review memory mode**: Flip through cards term by term, click "reveal answer", and rate Again / Hard / Good / Easy (SM-2-style spaced repetition; ease/interval/lapses/reps/due stored in `data.json`). On completion, Good/Easy terms can be written back to the note as `==term==` under a "🎴 cloze flashcards" section (`#flashcards review/flashcard`, compatible with the Spaced Repetition plugin).
+5. **Review memory mode**: Flip through cards term by term, click "reveal answer", and rate Again / Hard / Good / Easy (SM-2-style spaced repetition; ease/interval/lapses/reps/due stored in `data.json`). On completion, Good/Easy terms can be written back to the note as under a "🎴 cloze flashcards" section (`#flashcards review/flashcard`, compatible with the Spaced Repetition plugin).
 6. **Bidirectional document navigation**: When any markdown note is open, an "AI cloze" button in the view header opens its cloze reading view in one click; the "Back to note" button in the cloze view toolbar jumps back to the original note (activates the existing tab if already open).
 
 ## Demo
 
 A demo note is included at [`demo/demo-note.md`](demo/demo-note.md). Open it in Obsidian and run "Open AI cloze reading view for current note" to try AI cloze generation, density adjustment, review cards, and flashcard export.
+
 
 ## Development
 

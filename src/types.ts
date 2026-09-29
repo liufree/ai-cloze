@@ -7,65 +7,67 @@ export interface ProviderSettings {
   model: string;
   temperature: number;
   maxTokens: number;
-  /** 是否在浏览器跨域受限时走本机中继（预留，暂未启用） */
+  /** Whether to route through a local relay when the browser is cross-origin restricted (reserved, not yet enabled) */
   useProxy: boolean;
 }
 
 export interface ClozeTerm {
-  /** 挖空短语（须为原文中真实出现的片段） */
+  /** Cloze phrase (must be a snippet that actually appears in the source text) */
   text: string;
-  /** 重要性 1-10，用于密度排序 */
+  /** Importance 1-10, used for density ordering */
   importance: number;
 }
 
-/** 每篇笔记的 AI 挖空缓存：下次打开直接读取，除非点「重新AI挖空」 */
+/** Per-note AI cloze cache: read directly on next open unless "re-AI-cloze" is triggered */
 export interface NoteClozeCache {
-  /** 生成时的原文全文 */
+  /** Full source text at generation time */
   source: string;
-  /** 原文哈希，用于检测笔记是否已变化 */
+  /** Source hash, used to detect whether the note has changed */
   sourceHash: string;
-  /** AI 生成的候选挖空词（按 importance 降序） */
+  /** AI-generated candidate cloze terms (sorted by importance descending) */
   terms: ClozeTerm[];
-  /** 本次使用的挖空密度 0-100 */
+  /** Cloze density used for this run, 0-100 */
   density: number;
-  /** 生成时间戳 */
+  /** Generation timestamp */
   createdAt: number;
-  /** 使用的模型（便于追溯） */
+  /** Model used (for traceability) */
   model: string;
 }
 
-/** 单个复习卡：SM-2 记忆状态，key = `${path}::${term}` */
+/** Single review card: SM-2 memory state, key = `${path}::${term}` */
 export interface ReviewCard {
   path: string;
   term: string;
-  /** 最近一次评分 0=再次 1=困难 2=良好 3=简单 */
+  /** Most recent grade 0=again 1=hard 2=good 3=easy */
   lastGrade: number;
-  /** 间隔天数 */
+  /** Interval in days */
   interval: number;
-  /** 简易度因子（初始 2.5） */
+  /** Ease factor (initially 2.5) */
   ease: number;
-  /** 复习次数 */
+  /** Review count */
   reps: number;
-  /** 遗忘次数 */
+  /** Lapse count */
   lapses: number;
-  /** 下次到期时间戳(ms) */
+  /** Next due timestamp (ms) */
   due: number;
-  /** 是否已确认掌握（良好/简单 且 reps>=2） */
+  /** Whether it's been confirmed as mastered (good/easy and reps>=2) */
   mastered: boolean;
 }
 
 export interface AIClozeData {
   provider: ProviderSettings;
   defaultDensity: number;
-  /** 打开挖空视图时是否自动调用 AI 挖空（仅影响视图内行为，会消耗 token） */
+  /** UI language: system=follow Obsidian's UI language, zh=Chinese, en=English */
+  language: "system" | "zh" | "en";
+  /** Whether to automatically call AI cloze when opening the cloze view (only affects in-view behavior; consumes tokens) */
   autoCloze: boolean;
-  /** 是否后台预生成挖空（独立开关：无需打开挖空视图，切到笔记即预生成） */
+  /** Whether to pre-generate cloze in the background (independent toggle: pre-generates on switching to a note without opening the cloze view) */
   backgroundCloze: boolean;
-  /** 后台预生成范围：全部笔记 / 仅含指定标签 / 仅指定文件夹 */
+  /** Background pre-generation scope: all notes / only notes with specified tags / only specified folders */
   backgroundScope: "all" | "tag" | "folder";
-  /** backgroundScope=tag 时生效的标签列表（# 可选，支持子标签前缀匹配） */
+  /** Tag list active when backgroundScope=tag (# optional; supports sub-tag prefix matching) */
   backgroundTags: string[];
-  /** backgroundScope=folder 时生效的文件夹路径列表 */
+  /** Folder path list active when backgroundScope=folder */
   backgroundFolders: string[];
   clozeCache: Record<string, NoteClozeCache>;
   review: Record<string, ReviewCard>;

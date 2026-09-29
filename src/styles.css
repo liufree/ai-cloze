@@ -1,4 +1,4 @@
-/* ai-cloze · AI 挖空阅读 */
+/* ai-cloze · AI cloze reading */
 .ac-root {
   display: flex;
   flex-direction: column;
@@ -59,7 +59,7 @@
   margin: 0 auto;
 }
 
-/* 挖空 span */
+/* cloze span */
 .ac-cloze {
   border-bottom: 1px dashed var(--color-accent);
   cursor: pointer;
@@ -87,7 +87,7 @@
   text-underline-offset: 2px;
 }
 
-/* 复习模式 */
+/* review mode */
 .ac-review {
   max-width: 780px;
   margin: 0 auto;

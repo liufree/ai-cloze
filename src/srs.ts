@@ -1,6 +1,6 @@
 import type { ReviewCard } from "./types";
 
-/** SM-2 风格：评分 0=再次 1=困难 2=良好 3=简单 → 返回更新后的卡（不改变入参） */
+/** SM-2 style: grade 0=again 1=hard 2=good 3=easy → returns the updated card (doesn't mutate the input) */
 export function reviewCard(card: ReviewCard, grade: number): ReviewCard {
   const now = Date.now();
   const g = Math.max(0, Math.min(3, Math.round(grade)));
@@ -8,7 +8,7 @@ export function reviewCard(card: ReviewCard, grade: number): ReviewCard {
 
   reps += 1;
   if (g < 2) {
-    // 遗忘：重置间隔，加大难度
+    // forgotten: reset the interval, increase difficulty
     lapses += 1;
     interval = 1;
     ease = Math.max(1.3, ease - 0.2);
@@ -17,7 +17,7 @@ export function reviewCard(card: ReviewCard, grade: number): ReviewCard {
     else if (reps === 2) interval = 3;
     else interval = Math.round(interval * ease);
   } else {
-    // 简单：加速
+    // easy: accelerate
     ease = ease + 0.15;
     if (reps === 1) interval = 4;
     else if (reps === 2) interval = 7;
